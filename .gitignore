@@ -1,0 +1,13 @@
+# Environments (Password များ ပါနိုင်သဖြင့် မတင်သင့်ပါ)
+.env
+
+# Python Virtual Environment
+venv/
+__pycache__/
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
