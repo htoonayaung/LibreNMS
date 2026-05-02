@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | DMS NOC PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #07101e; color: #e2e8f0; font-family: Inter, system-ui, sans-serif; }
+        .card { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(148, 163, 184, 0.12); backdrop-filter: blur(14px); }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="mx-auto max-w-3xl space-y-6">
+        <header class="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-slate-950/40">
+            <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Account Profile</h1>
+                    <p class="mt-1 text-sm text-slate-400">Update your password and account details.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ url_for('index') }}" class="rounded-full bg-slate-800 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700">Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="rounded-full bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        {% if message %}
+        <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+            {{ message }}
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-100">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="card rounded-3xl p-6 shadow-xl shadow-slate-950/40">
+            <h2 class="text-lg font-semibold text-white">Change password</h2>
+            <form action="{{ url_for('profile') }}" method="post" class="mt-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300" for="current_password">Current password</label>
+                    <input id="current_password" name="current_password" type="password" required
+                        class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300" for="new_password">New password</label>
+                    <input id="new_password" name="new_password" type="password" required
+                        class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300" for="confirm_password">Confirm new password</label>
+                    <input id="confirm_password" name="confirm_password" type="password" required
+                        class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                </div>
+                <button type="submit" class="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-500">
+                    Update password
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

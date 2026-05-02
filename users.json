@@ -1,0 +1,14 @@
+[
+  {
+    "username": "admin",
+    "password_hash": "scrypt:32768:8:1$zAOhAruyRI2QoKOM$f3d3071bbf2c427ae08dcc1e17df8869a29e7e43caa3ba51466a97095c42f156d07baeb866ff33e95ab45da6577e288551bfe2c7fa317c20a7b0f30cd0dddda1",
+    "role": "admin",
+    "created_at": "2026-04-28T10:37:21.004378Z"
+  },
+  {
+    "username": "admin1",
+    "password_hash": "scrypt:32768:8:1$c8pg29vQbjdPIZ8b$9f91c2bf2d9e1903e6b9857555fa5315b65a9c18769ac4194761a9363b2f8dd0a6cda810fdf5bb4c1e0a26f18bef538ba8b94d5be3c3c573a004643f9dc728e9",
+    "role": "admin",
+    "created_at": "2026-04-28T10:39:22.816209Z"
+  }
+]

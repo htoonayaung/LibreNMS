@@ -1,0 +1,15 @@
+[Unit]
+Description=Flask App Supervisor for scripts/app.py
+After=network.target
+
+[Service]
+Type=simple
+User=hna
+WorkingDirectory=/home/hna/scripts
+ExecStart=/home/hna/scripts/start-app.sh
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

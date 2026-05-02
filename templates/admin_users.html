@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users | DMS NOC PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #07101e; color: #e2e8f0; font-family: Inter, system-ui, sans-serif; }
+        .card { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(148, 163, 184, 0.12); backdrop-filter: blur(14px); }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="mx-auto max-w-6xl space-y-6">
+        <header class="flex flex-col gap-3 rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl shadow-slate-950/40">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">User Management</h1>
+                    <p class="mt-1 text-sm text-slate-400">Create and manage accounts for the dashboard.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ url_for('index') }}" class="rounded-full bg-slate-800 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700">Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="rounded-full bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        {% if message %}
+        <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+            {{ message }}
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-100">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <section class="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+            <div class="card rounded-3xl p-6 shadow-xl shadow-slate-950/40">
+                <h2 class="text-lg font-semibold text-white">Existing users</h2>
+                <div class="mt-5 overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-200">
+                        <thead class="border-b border-slate-700 text-slate-400">
+                            <tr>
+                                <th class="px-4 py-3">Username</th>
+                                <th class="px-4 py-3">Role</th>
+                                <th class="px-4 py-3">Created</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+                            {% for user in users %}
+                            <tr>
+                                <td class="px-4 py-3 font-medium text-white">{{ user.username }}</td>
+                                <td class="px-4 py-3 text-slate-300">{{ user.role }}</td>
+                                <td class="px-4 py-3 text-slate-400">{{ user.created_at }}</td>
+                                <td class="px-4 py-3">
+                                    {% if user.username != current_user.username %}
+                                    <form action="{{ url_for('admin_users') }}" method="post" class="flex flex-wrap gap-2">
+                                        <input type="hidden" name="action" value="delete" />
+                                        <input type="hidden" name="username" value="{{ user.username }}" />
+                                        <button type="submit" class="rounded-full bg-rose-500 px-3 py-1 text-xs font-semibold text-white hover:bg-rose-400">Delete</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-xs uppercase tracking-[0.2em] text-slate-500">Current</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td class="px-4 py-4 text-slate-400" colspan="3">No users configured yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card rounded-3xl p-6 shadow-xl shadow-slate-950/40">
+                <h2 class="text-lg font-semibold text-white">Create new user</h2>
+                <form action="{{ url_for('admin_users') }}" method="post" class="mt-5 space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300" for="username">Username</label>
+                        <input id="username" name="username" type="text" required
+                            class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300" for="password">Password</label>
+                        <input id="password" name="password" type="password" required
+                            class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300" for="role">Role</label>
+                        <select id="role" name="role" class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-500">
+                        Create account
+                    </button>
+                </form>
+
+                <div class="mt-8 border-t border-slate-800 pt-8">
+                    <h2 class="text-lg font-semibold text-white">Reset user password</h2>
+                    <form action="{{ url_for('admin_users') }}" method="post" class="mt-5 space-y-5">
+                        <input type="hidden" name="action" value="reset" />
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-300" for="reset_username">Username</label>
+                            <input id="reset_username" name="username" type="text" required
+                                class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-300" for="reset_password">New password</label>
+                            <input id="reset_password" name="password" type="password" required
+                                class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                        </div>
+                        <button type="submit" class="w-full rounded-2xl bg-amber-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400">
+                            Reset password
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-8 border-t border-slate-800 pt-8">
+                    <h2 class="text-lg font-semibold text-white">Delete user</h2>
+                    <form action="{{ url_for('admin_users') }}" method="post" class="mt-5 space-y-5">
+                        <input type="hidden" name="action" value="delete" />
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-300" for="delete_username">Username</label>
+                            <input id="delete_username" name="username" type="text" required
+                                class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                        </div>
+                        <button type="submit" class="w-full rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/20 transition hover:bg-rose-500">
+                            Delete user
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

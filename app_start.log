@@ -1,0 +1,67 @@
+[2026-05-02 13:13:13 +0630] [550866] [INFO] Starting gunicorn 25.3.0
+[2026-05-02 13:13:13 +0630] [550866] [INFO] Listening at: http://0.0.0.0:8000 (550866)
+[2026-05-02 13:13:13 +0630] [550866] [INFO] Using worker: sync
+[2026-05-02 13:13:13 +0630] [550867] [INFO] Booting worker with pid: 550867
+[2026-05-02 13:13:13 +0630] [550868] [INFO] Booting worker with pid: 550868
+[2026-05-02 13:13:13 +0630] [550869] [INFO] Booting worker with pid: 550869
+[2026-05-02 13:13:13 +0630] [550881] [INFO] Booting worker with pid: 550881
+[2026-05-02 13:13:13 +0630] [550866] [INFO] Control socket listening at /run/user/1000/gunicorn.ctl
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+[2026-05-02 13:14:37 +0630] [550866] [CRITICAL] WORKER TIMEOUT (pid:550867)
+[2026-05-02 13:14:37 +0630] [550867] [ERROR] Error handling request (no URI read)
+Traceback (most recent call last):
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/workers/sync.py", line 141, in handle
+    req = next(parser)
+          ^^^^^^^^^^^^
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/parser.py", line 56, in __next__
+    self.mesg = self.mesg_class(self.cfg, self.unreader, self.source_addr, self.req_count)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/message.py", line 410, in __init__
+    super().__init__(cfg, unreader, peer_addr)
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/message.py", line 184, in __init__
+    unused = self.parse(self.unreader)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/message.py", line 422, in parse
+    self.read_into(unreader, buf, stop=True)
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/message.py", line 558, in read_into
+    data = unreader.read()
+           ^^^^^^^^^^^^^^^
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/unreader.py", line 36, in read
+    d = self.chunk()
+        ^^^^^^^^^^^^
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/http/unreader.py", line 65, in chunk
+    return self.sock.recv(self.mxchunk)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hna/scripts/venv/lib/python3.12/site-packages/gunicorn/workers/base.py", line 198, in handle_abort
+    sys.exit(1)
+SystemExit: 1
+[2026-05-02 13:14:37 +0630] [550867] [INFO] Worker exiting (pid: 550867)
+[2026-05-02 13:14:38 +0630] [551947] [INFO] Booting worker with pid: 551947
+[2026-05-02 13:14:38 +0630] [550866] [INFO] Control socket listening at /run/user/1000/gunicorn.ctl
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+INFO:root:Dashboard accessed
+[2026-05-02 13:23:55 +0630] [550866] [INFO] Handling signal: term
+[2026-05-02 13:23:55 +0630] [550868] [INFO] Worker exiting (pid: 550868)
+[2026-05-02 13:23:55 +0630] [550869] [INFO] Worker exiting (pid: 550869)
+[2026-05-02 13:23:55 +0630] [551947] [INFO] Worker exiting (pid: 551947)
+[2026-05-02 13:23:55 +0630] [550881] [INFO] Worker exiting (pid: 550881)
+[2026-05-02 13:23:55 +0630] [550866] [INFO] Worker (pid:550868) was sent SIGTERM!
+[2026-05-02 13:23:55 +0630] [550866] [INFO] Worker (pid:550869) was sent SIGTERM!
+[2026-05-02 13:23:55 +0630] [550866] [INFO] Worker (pid:550881) was sent SIGTERM!
+[2026-05-02 13:23:55 +0630] [550866] [INFO] Worker (pid:551947) was sent SIGTERM!
+[2026-05-02 13:23:55 +0630] [550866] [INFO] Shutting down: Master
+Starting command (attempt 1): ['/home/hna/scripts/venv/bin/gunicorn', '-w', '4', '-b', '0.0.0.0:8000', 'app:app']
+Supervisor received shutdown signal.

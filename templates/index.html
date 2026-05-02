@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMS NOC PRO | Monitoring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta http-equiv="refresh" content="30">
+    <style>
+        body { background-color: #0b0e14; color: #e5e7eb; font-family: Inter, system-ui, sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.07); }
+        .card-border { border: 1px solid rgba(148,163,184,0.12); }
+        ::selection { background: rgba(96, 165, 250, 0.35); color: #ffffff; }
+    </style>
+</head>
+<body class="p-0 m-0">
+    <header class="sticky top-0 z-50 glass px-6 py-4 border-b border-white/10 shadow-sm">
+        <div class="container mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="rounded-3xl bg-blue-600 p-3 shadow-lg shadow-blue-500/10">
+                    <i class="fas fa-network-wired text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight text-white">DMS <span class="text-blue-400">NOC PRO</span></h1>
+                    <p class="mt-1 text-sm text-slate-400">Live LibreNMS status, alerts, and device health in one view.</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs uppercase tracking-[0.3em] text-slate-500">Last refreshed</p>
+                <div id="clock" class="mt-2 text-sm font-mono text-blue-300"></div>
+                {% if current_user %}
+                <div class="mt-4 flex flex-col sm:flex-row sm:justify-end sm:items-center sm:gap-3 text-right">
+                    <span class="text-sm text-slate-300">Signed in as <strong>{{ current_user.username }}</strong></span>
+                    <div class="space-x-2">
+                        <a href="{{ url_for('profile') }}" class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">Profile</a>
+                        <a href="{{ url_for('reports') }}" class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">Reports</a>
+                        {% if is_admin %}
+                        <a href="{{ url_for('admin_users') }}" class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">Manage users</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="inline-flex items-center rounded-full border border-blue-600 bg-blue-600/10 px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Logout</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 pb-10 pt-6">
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+            <article class="glass rounded-3xl p-6 card-border shadow-xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Total devices</p>
+                <p class="mt-4 text-4xl font-black text-slate-100">{{ total }}</p>
+                <p class="mt-2 text-sm text-slate-500">All monitored devices.</p>
+            </article>
+            <article class="glass rounded-3xl p-6 card-border shadow-xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Online</p>
+                <p class="mt-4 text-4xl font-black text-emerald-300">{{ up }}</p>
+                <p class="mt-2 text-sm text-slate-500">Devices currently reachable.</p>
+            </article>
+            <article class="glass rounded-3xl p-6 card-border shadow-xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Offline</p>
+                <p class="mt-4 text-4xl font-black text-rose-300">{{ down }}</p>
+                <p class="mt-2 text-sm text-slate-500">Devices requiring attention.</p>
+            </article>
+            <article class="glass rounded-3xl p-6 card-border shadow-xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Active alerts</p>
+                <p class="mt-4 text-4xl font-black text-amber-300">{{ alerts|length }}</p>
+                <p class="mt-2 text-sm text-slate-500">Recent alert volume.</p>
+            </article>
+        </section>
+
+        {% if api_error %}
+        <section class="glass rounded-3xl p-5 mb-6 border border-red-500/20 bg-red-950/70 text-red-100 shadow-lg">
+            <div class="flex items-start gap-3">
+                <div class="mt-1 rounded-full bg-red-500/10 p-2 text-red-300">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-red-300">API warning</h2>
+                    <p class="mt-2 text-sm text-red-100 leading-6">{{ api_error }}</p>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="glass rounded-3xl p-5 mb-6 border border-white/10 shadow-xl">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-100">Quick filters</h2>
+                    <p class="mt-1 text-sm text-slate-400">Search across hostname, IP, status, and vendor.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+                    <input id="searchInput" type="text" placeholder="Search hostname / IP..."
+                        class="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 focus:border-blue-500 focus:outline-none" />
+                    <select id="statusFilter" class="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 focus:border-blue-500 focus:outline-none">
+                        <option value="all">All status</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                    <select id="vendorFilter" class="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 focus:border-blue-500 focus:outline-none">
+                        <option value="all">All vendor</option>
+                        <option value="zte">ZTE</option>
+                        <option value="cisco">Cisco</option>
+                        <option value="mikrotik">MikroTik</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <section class="xl:col-span-2 glass rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                <div class="bg-slate-950/90 px-6 py-5 border-b border-white/10">
+                    <h3 class="text-lg font-semibold text-slate-100">Device Monitoring</h3>
+                    <p class="mt-1 text-sm text-slate-400">Click a row to load the last 24h CPU chart.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[900px] text-left">
+                        <thead class="bg-slate-900 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+                            <tr>
+                                <th class="px-6 py-4">Device</th>
+                                <th class="px-6 py-4 text-center">CPU</th>
+                                <th class="px-6 py-4 text-center">Mem</th>
+                                <th class="px-6 py-4 text-center">Temp</th>
+                                <th class="px-6 py-4 text-center">Status</th>
+                                <th class="px-6 py-4">Uptime</th>
+                                <th class="px-6 py-4">Health</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-sm text-slate-200">
+                            {% for d in devices %}
+                            <tr class="cursor-pointer transition hover:bg-slate-900/60 {% if not d.online %}bg-rose-950/50{% elif d.health_warnings %}bg-amber-950/50{% endif %}"
+                                data-host="{{ d.hostname | default('') }}"
+                                data-ip="{{ d.ip | default('') }}"
+                                data-status="{{ 'online' if d.online else 'offline' }}"
+                                data-os="{{ d.os | lower | default('') }}"
+                                data-device-id="{{ d.device_id }}">
+                                <td class="px-6 py-4">
+                                    <a href="http://10.0.34.55/device/device={{ d.device_id }}/" target="_blank" class="block font-semibold text-sky-300 hover:text-sky-200">{{ d.display_name }}</a>
+                                    <div class="mt-2 text-[11px] text-slate-500">{{ d.os }} • {{ d.last_polled }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center font-semibold {% if d.cpu >= thresholds.cpu_high %}text-rose-300{% elif d.cpu >= thresholds.cpu_warning %}text-amber-300{% else %}text-slate-200{% endif %}">{{ "%.1f"|format(d.cpu) }}%</td>
+                                <td class="px-6 py-4 text-center font-semibold {% if d.mem >= thresholds.mem_high %}text-rose-300{% elif d.mem >= thresholds.mem_warning %}text-amber-300{% else %}text-slate-200{% endif %}">{{ "%.1f"|format(d.mem) }}%</td>
+                                <td class="px-6 py-4 text-center font-semibold {% if d.temp != 'N/A' and d.temp >= thresholds.temp_high %}text-rose-300{% elif d.temp != 'N/A' and d.temp >= thresholds.temp_warning %}text-amber-300{% else %}text-slate-200{% endif %}">{{ d.temp if d.temp != 'N/A' else '--' }}°C</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold {{ 'bg-emerald-500/15 text-emerald-300' if d.online else 'bg-rose-500/15 text-rose-300' }}">{{ 'ONLINE' if d.online else 'OFFLINE' }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-[11px] text-slate-400">{{ d.uptime_short or 'N/A' }}</td>
+                                <td class="px-6 py-4">
+                                    {% if d.health_warnings %}
+                                    <div class="flex flex-wrap gap-1">
+                                        {% for warning in d.health_warnings %}
+                                        <span class="rounded-full bg-rose-500/10 px-2 py-1 text-[10px] font-semibold text-rose-200">{{ warning }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <span class="rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">OK</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if devices|length == 0 %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-12 text-center text-slate-500">No devices available. Check LibreNMS connectivity and API token configuration.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <aside class="space-y-6">
+                <div class="glass rounded-3xl p-5 border border-white/10 shadow-2xl">
+                    <h3 class="text-base font-semibold text-slate-100">Alert summary</h3>
+                    <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-200">
+                        <div class="rounded-3xl bg-slate-900/80 p-4">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Critical</p>
+                            <p class="mt-2 text-2xl font-black text-rose-300">{{ severity_counts.critical }}</p>
+                        </div>
+                        <div class="rounded-3xl bg-slate-900/80 p-4">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Warning</p>
+                            <p class="mt-2 text-2xl font-black text-amber-300">{{ severity_counts.warning }}</p>
+                        </div>
+                        <div class="rounded-3xl bg-slate-900/80 p-4">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Info</p>
+                            <p class="mt-2 text-2xl font-black text-sky-300">{{ severity_counts.info }}</p>
+                        </div>
+                        <div class="rounded-3xl bg-slate-900/80 p-4">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Other</p>
+                            <p class="mt-2 text-2xl font-black text-slate-400">{{ severity_counts.other }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl p-5 border border-white/10 shadow-2xl overflow-hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-100">Active alerts</h3>
+                            <p class="mt-2 text-sm text-slate-400">Filter alerts by severity and manage them faster.</p>
+                        </div>
+                        <form action="{{ url_for('acknowledge_all') }}" method="post">
+                            <button type="submit" class="rounded-2xl bg-sky-500/15 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-500/25">Acknowledge all</button>
+                        </form>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button type="button" data-alert-filter="all" class="alert-filter-btn rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-semibold text-slate-200">All</button>
+                        <button type="button" data-alert-filter="critical" class="alert-filter-btn rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-semibold text-rose-200">Critical</button>
+                        <button type="button" data-alert-filter="warning" class="alert-filter-btn rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-semibold text-amber-200">Warning</button>
+                        <button type="button" data-alert-filter="info" class="alert-filter-btn rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-semibold text-sky-200">Info</button>
+                    </div>
+                    <div class="mt-4 space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                        {% for alert in alerts %}
+                        <div class="alert-card rounded-3xl border border-white/10 bg-slate-950/80 p-4" data-severity="{{ alert.severity }}">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="font-semibold text-slate-100">{{ alert.display_name }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ alert.hostname or 'N/A' }}</p>
+                                </div>
+                                <span class="rounded-full px-3 py-1 text-[11px] font-semibold {{ 'bg-rose-500/15 text-rose-200' if alert.severity == 'critical' else 'bg-amber-500/15 text-amber-200' if alert.severity == 'warning' else 'bg-sky-500/15 text-sky-200' if alert.severity == 'info' else 'bg-slate-500/15 text-slate-200' }}">{{ alert.severity_label }}</span>
+                            </div>
+                            <div class="mt-3 flex items-center justify-between gap-3 text-xs text-slate-400">
+                                <span>{{ alert.timestamp }}</span>
+                                <form action="{{ url_for('acknowledge_alert', alert_id=alert.id) }}" method="post">
+                                    <button type="submit" class="rounded-full bg-sky-500/10 px-3 py-1 text-sky-200 hover:bg-sky-500/20">ACK</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if not alerts %}
+                        <div class="rounded-3xl bg-emerald-950/70 p-5 text-slate-300">
+                            <p class="font-semibold">All Clear</p>
+                            <p class="mt-1 text-sm text-slate-500">No active alerts detected.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl p-5 border border-white/10 shadow-2xl">
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-100">Device history</h3>
+                            <p class="mt-2 text-sm text-slate-400">Tap a device row to immediately load 24h CPU history.</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Selected device</p>
+                            <p id="graphDeviceName" class="mt-1 text-sm font-semibold text-slate-200">None</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 h-[260px]">
+                        <canvas id="historyChart" class="h-full w-full"></canvas>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const vendorFilter = document.getElementById('vendorFilter');
+        const graphDeviceName = document.getElementById('graphDeviceName');
+        const alertFilterButtons = document.querySelectorAll('[data-alert-filter]');
+        let historyChart = null;
+
+        function setSelectedRow(selectedRow) {
+            document.querySelectorAll('tbody tr').forEach(row => {
+                row.classList.remove('bg-sky-950/60', 'shadow-inner');
+            });
+            if (selectedRow) {
+                selectedRow.classList.add('bg-sky-950/60');
+            }
+        }
+
+        async function loadGraph(deviceId, deviceName = null) {
+            try {
+                const res = await fetch(`/device/${deviceId}/history`);
+                const data = await res.json();
+                const labels = data.timestamps || [];
+                const values = data.values || [];
+                const ctx = document.getElementById('historyChart');
+
+                if (deviceName) {
+                    graphDeviceName.textContent = deviceName;
+                }
+                if (historyChart) {
+                    historyChart.destroy();
+                }
+
+                historyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'CPU %',
+                            data: values,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96,165,250,0.25)',
+                            tension: 0.2,
+                            fill: true,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            x: { display: true },
+                            y: { display: true, beginAtZero: true, max: 100 }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to load graph:', error);
+            }
+        }
+
+        function filterTable() {
+            const search = searchInput.value.toLowerCase();
+            const status = statusFilter.value;
+            const vendor = vendorFilter.value;
+
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const hostname = row.dataset.host?.toLowerCase() || '';
+                const ip = row.dataset.ip?.toLowerCase() || '';
+                const rowStatus = row.dataset.status;
+                const os = row.dataset.os || '';
+
+                let show = true;
+                if (search && !(hostname.includes(search) || ip.includes(search))) {
+                    show = false;
+                }
+                if (status !== 'all' && rowStatus !== status) {
+                    show = false;
+                }
+                if (vendor !== 'all' && !os.includes(vendor)) {
+                    show = false;
+                }
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        statusFilter.addEventListener('change', filterTable);
+        vendorFilter.addEventListener('change', filterTable);
+
+        function filterAlerts(severity) {
+            alertFilterButtons.forEach(btn => {
+                btn.classList.toggle('bg-slate-700', btn.dataset.alertFilter === severity);
+                btn.classList.toggle('bg-slate-900', btn.dataset.alertFilter !== severity);
+            });
+            document.querySelectorAll('.alert-card').forEach(card => {
+                card.style.display = severity === 'all' || card.dataset.severity === severity ? '' : 'none';
+            });
+        }
+
+        alertFilterButtons.forEach(button => {
+            button.addEventListener('click', () => filterAlerts(button.dataset.alertFilter));
+        });
+        filterAlerts('all');
+
+        const deviceRows = Array.from(document.querySelectorAll('tbody tr'));
+        deviceRows.forEach(row => {
+            const deviceId = row.dataset.deviceId;
+            if (!deviceId) return;
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', event => {
+                if (event.target.closest('a, button, form')) return;
+                setSelectedRow(row);
+                loadGraph(deviceId, row.querySelector('a')?.textContent.trim() || `Device ${deviceId}`);
+            });
+        });
+
+        if (deviceRows.length > 0) {
+            const firstRow = deviceRows.find(row => row.style.display !== 'none');
+            if (firstRow) {
+                setSelectedRow(firstRow);
+                loadGraph(firstRow.dataset.deviceId, firstRow.querySelector('a')?.textContent.trim() || `Device ${firstRow.dataset.deviceId}`);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
